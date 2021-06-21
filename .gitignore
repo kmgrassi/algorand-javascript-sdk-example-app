@@ -1,0 +1,27 @@
+# general
+.DS_Store
+.idea/
+.env
+
+#Dependencies
+node_modules/
+
+# api
+server/dist
+server/.env
+
+# client
+client/build
+client/cypress/examples
+coverage
+client/.env
+
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+
+
+
