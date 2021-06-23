@@ -18,19 +18,11 @@ import { LoggingInterceptor } from './shared/logging/logging-interceptor';
       imports: [ConfigModule],
       useFactory: async (config: ConfigService) => ({
         type: 'postgres' as 'postgres',
-        host: config.get('DB_HOST'),
-        port: Number(config.get('DB_PORT')),
-        username: config.get('DB_USER'),
-        password: config.get('DB_PASSWORD'),
-        database: config.get('DB_DATABASE'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        ssl:
-          config.get('ENV') === 'dev' ? false : { rejectUnauthorized: false },
+        url: process.env.DATABASE_URL,
+        autoLoadEntities: true,
         synchronize: true,
-        logging: true,
       }),
     }),
-
     AssetModule,
   ],
   controllers: [AppController],

@@ -1,0 +1,48 @@
+version: "3.8"
+services:
+  nginx:
+    build: ./nginx
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "80:80"
+    networks:
+      - algorand
+  postgres:
+    image: "postgres"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db
+    ports:
+      - "35000:5432"
+    networks:
+      - algorand
+  frontend:
+    build: ./client
+    image: "frontend"
+    ports:
+      - "3000:3000"
+    expose:
+      - "3001"
+    volumes:
+      - ./client:/client
+      - /client/node_modules
+    links:
+      - backend
+    networks:
+      - algorand
+  backend:
+    build: ./server
+    image: "backend"
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgres://user:password@postgres:5432/db
+      NODE_ENV: development
+      PORT: 80
+    networks:
+      - algorand
+networks:
+  algorand:

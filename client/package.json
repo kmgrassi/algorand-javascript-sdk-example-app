@@ -2,7 +2,7 @@
   "name": "fullstack-react-nestjs-template",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://localhost:9999",
+  "proxy": "http://localhost:8080",
   "dependencies": {
     "@material-ui/core": "^4.11.1",
     "@material-ui/icons": "^4.9.1",
@@ -33,7 +33,10 @@
     "format": "prettier --write \"src/**/*.ts*\"",
     "cypress": "./node_modules/.bin/cypress open",
     "test": "react-scripts test --env=jest-environment-jsdom-sixteen",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "docker-build": "docker build . -t client",
+    "docker-run": "docker run -p 3001:3001 -d --name client-container client",
+    "docker-stop-rm": "docker stop client-container && docker rm client-container"
   },
   "devDependencies": {
     "@testing-library/dom": "^7.26.5",

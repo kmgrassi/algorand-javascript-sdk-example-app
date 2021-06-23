@@ -13,7 +13,7 @@ async function bootstrap() {
     bodyParser: false,
   });
   app.enableCors();
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('/api');
 
   const options = new DocumentBuilder()
     .setTitle('Foundation API')
