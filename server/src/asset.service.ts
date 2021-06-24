@@ -1,9 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ConfigService } from '../config.service';
-
+import { ConfigService } from './config.service';
 import { AlgoAccount, AssetTransferDto } from './algoAsset.entity';
+
 const config = new ConfigService();
 const algosdk = require('algosdk');
 
@@ -39,31 +36,8 @@ const senderAccount =
     ? 'DX2ZYKPQKF6CZBIFILW6SWYGPDJXQS5USW4BJIY4TPL2T4CUJD6PQLC2GI'
     : 'Mainnet account address';
 
-@Injectable()
 export class AssetService {
-  constructor(
-    @InjectRepository(AlgoAccount)
-    private readonly algoAccountRepository: Repository<AlgoAccount>,
-  ) {}
-
-  public async getAccounts(): Promise<AlgoAccount[]> {
-    return await this.algoAccountRepository
-      .createQueryBuilder('account')
-      .select('account.address')
-      .getMany();
-  }
-
-  public async getAccountByAddress(address: string): Promise<AlgoAccount> {
-    const account = await this.algoAccountRepository
-      .createQueryBuilder('account')
-      .where('account.address = :address', { address })
-      .getOne();
-
-    if (!account) {
-      return Promise.reject("Can't find account with that address");
-    }
-    return account;
-  }
+  constructor() {}
 
   public async lookupAddressById(address: string): Promise<any> {
     let asset = await indexerClient.lookupAccountByID(address).do();
@@ -106,18 +80,7 @@ export class AssetService {
     });
   }
 
-  public async addAccountToDb({ address, mnemonic }): Promise<AlgoAccount> {
-    const res = await this.algoAccountRepository.save({
-      address,
-      mnemonic,
-    });
-
-    console.log(res);
-
-    return res;
-  }
-
-  public async generateAlgorandAccount(): Promise<AlgoAccount> {
+  public async generateAlgorandAccount(): Promise<any> {
     const account = algosdk.generateAccount();
     const mnemonic = algosdk.secretKeyToMnemonic(account.sk);
 
@@ -125,8 +88,7 @@ export class AssetService {
       address: account.addr,
       mnemonic,
     };
-
-    return await this.addAccountToDb(newAccount);
+    return newAccount;
   }
 
   // Each account need a userId as reference. The mnemonic should never be shared outside the api.
@@ -137,28 +99,21 @@ export class AssetService {
     await this.sendAlgos(senderMnemonic, address, 1000000).catch((err) =>
       console.log(err),
     );
-
-    return await this.algoAccountRepository.save({
-      address,
-      mnemonic,
-      user: {
-        id: userId,
-      },
-    });
   }
 
-  public async createNewAlgoAsset(data: {
-    totalTokens: number;
-    tokenName: string;
-    address: string;
-  }) {
+  public async createNewAlgoAsset(
+    data: {
+      totalTokens: number;
+      tokenName: string;
+      address: string;
+    },
+    mnemonic,
+  ) {
     if (!data || !data.totalTokens || !data.tokenName || !data.address) {
       return Promise.reject('Not enough data provided to create the asset');
     }
 
     const { totalTokens, tokenName, address } = data;
-    const account = await this.getAccountByAddress(address);
-    const { mnemonic } = account;
 
     const sender = algosdk.mnemonicToSecretKey(mnemonic);
 
@@ -267,19 +222,19 @@ export class AssetService {
 
   // Used by the controller to transfer an asset
   public async createAssetTransferWithAssetInfo({
-    senderAddress,
-    recipientAddress,
+    senderAccount,
+    recipientAccount,
     assetId,
     amount,
   }: AssetTransferDto) {
     // Create opt in from recipient user (will send zero assets to recipient)
-    await this.assetTransferOptIn(recipientAddress, assetId);
+    await this.assetTransferOptIn(recipientAccount, assetId);
 
     // Create the transfer
     await this.createAssetTransfer(
       Number(amount),
-      senderAddress,
-      recipientAddress,
+      senderAccount,
+      recipientAccount,
       assetId,
     );
   }
@@ -287,14 +242,10 @@ export class AssetService {
   // This assumes the recipient already opted in to receive the asset
   public async createAssetTransfer(
     amount: number,
-    senderAddress: string,
-    recipientAddress: string,
+    senderAccount: AlgoAccount,
+    recipientAccount: AlgoAccount,
     assetId: number,
   ) {
-    const senderAccount = await this.getAccountByAddress(senderAddress);
-
-    console.log(senderAccount);
-
     const senderSecretKey = algosdk.mnemonicToSecretKey(senderAccount.mnemonic)
       .sk;
 
@@ -311,8 +262,8 @@ export class AssetService {
 
     // signing and sending "txn" allows sender to begin accepting asset specified by creator and index
     let opttxn = algosdk.makeAssetTransferTxnWithSuggestedParams(
-      senderAddress,
-      recipientAddress,
+      senderAccount.address,
+      recipientAccount.address,
       closeRemainderTo,
       revocationTarget,
       Number(amount),
@@ -335,8 +286,8 @@ export class AssetService {
     await this.waitForConfirmation(algoClient, opttx.txId);
 
     //You should now see the new asset listed in the account information
-    console.log('Account = ' + recipientAddress);
-    await this.printAssetHolding(algoClient, recipientAddress, assetId);
+    console.log('Account = ' + recipientAccount.address);
+    await this.printAssetHolding(algoClient, recipientAccount.address, assetId);
   }
 
   // Opting in to an Asset:
@@ -344,10 +295,8 @@ export class AssetService {
   // Allow accounts that want receive the new asset
   // Have to opt in. To do this they send an asset transfer
   // of zero  to themselves
-  public async assetTransferOptIn(address, assetId) {
-    const account = await this.getAccountByAddress(address);
-
-    await this.createAssetTransfer(0, address, address, assetId);
+  public async assetTransferOptIn(account: AlgoAccount, assetId) {
+    await this.createAssetTransfer(0, account, account, assetId);
   }
 
   // Send algorand tokens from address to address

@@ -16,7 +16,7 @@ export interface AssetTransferDto {
 
 export const AssetContextWrapper = ({ children }) => {
   const addEntity = useAddEntity();
-  const [loading, accounts, getAccounts] = useEntity('asset');
+  const [loading, accounts, getAccounts] = useEntity('');
 
   const [accountsWithInfo, setAccountsWithInfo] = useState<any>([]);
 

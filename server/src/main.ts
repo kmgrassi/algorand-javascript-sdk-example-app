@@ -1,40 +1,88 @@
-import { NestFactory } from '@nestjs/core';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { AppModule } from './app.module';
-const requestIp = require('request-ip');
+import { AssetService } from './asset.service';
+const express = require('express');
+const app = express();
+const fs = require('fs');
+const data = require('../src/db.json');
+const bodyParser = require('body-parser');
 
-import { json } from 'express';
+const assetService = new AssetService();
+app.use(bodyParser.json());
+const prefix = '/api';
+const port = 3000;
 
-// tslint:disable: no-var-requires
-const rateLimit = require('express-rate-limit');
+app.get(prefix, (req, res) => {
+  res.send(data);
+});
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    bodyParser: false,
+app.get(prefix + '/asset/account/:id', async (req, res) => {
+  const address = req.params.id;
+  let asset = '';
+
+  if (address) {
+    asset = await assetService.lookupAddressById(address);
+  }
+
+  res.send(asset);
+});
+
+// Create a new alogrand account
+app.post(prefix + '/asset/account', async (req, res) => {
+  const account = await assetService.generateAlgorandAccount();
+
+  if (account) {
+    data.push(account);
+
+    fs.writeFile(__dirname + '/db.json', JSON.stringify(data), (err) => {
+      if (err) Promise.reject(err);
+    });
+  }
+
+  res.send(data);
+});
+
+// Transfer an algorand asset
+app.post(prefix + '/asset/transfer', async (req, res) => {
+  let asset;
+  const { body } = req;
+
+  const senderAccount = data.find((account) => {
+    return account.address === body.senderAddress;
   });
-  app.enableCors();
-  app.setGlobalPrefix('/api');
 
-  const options = new DocumentBuilder()
-    .setTitle('Foundation API')
-    .setDescription('Foundation API')
-    .setVersion('1.0')
-    .setBasePath('api')
-    .build();
-  const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup('/swagger', app, document);
+  const recipientAccount = data.find((account) => {
+    return account.address === body.recipientAddress;
+  });
 
-  // app.use(
-  //   rateLimit({
-  //     windowMs: 15 * 60 * 1000, // 15 minutes
-  //     max: 1000, // limit each IP to 100 requests per windowMs
-  //   }),
-  // );
+  if (senderAccount && recipientAccount) {
+    const transferData = {
+      senderAccount,
+      recipientAccount,
+      assetId: body.assetId,
+      amount: body.amount,
+    };
+    asset = await assetService.createAssetTransferWithAssetInfo(transferData);
+  }
 
-  app.use(requestIp.mw());
-  app.use('*/bulk', json({ limit: '50mb' }));
-  // app.use(json({ limit: '100kb' }));
+  res.send(asset);
+});
 
-  await app.listen(process.env.PORT || 9999);
-}
-bootstrap();
+// Create an algorand asset
+app.post(prefix + '/asset', async (req, res) => {
+  let asset;
+  const { body } = req;
+
+  const account = data.find((account) => {
+    return account.address === body.address;
+  });
+
+  if (account) {
+    const { mnemonic } = account;
+    asset = await assetService.createNewAlgoAsset(body, mnemonic);
+  }
+
+  res.send(asset);
+});
+
+app.listen(port, () => {
+  console.log(`Example app listening at http://localhost:${port}`);
+});
