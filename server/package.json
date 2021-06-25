@@ -8,7 +8,8 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "ts-node -r tsconfig-paths/register src/main.ts",
     "start:dev": "nodemon",
-    "start:debug": "nodemon --config nodemon-debug.json"
+    "start:debug": "nodemon --config nodemon-debug.json",
+    "deploy": "git subtree push --prefix server heroku-server master"
   },
   "dependencies": {
     "algosdk": "^1.9.1",

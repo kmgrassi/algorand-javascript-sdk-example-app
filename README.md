@@ -1,51 +1,54 @@
-# DwellWell Developer Guide
+# Algorand JavaScript SDK example app
+
+Link to working app: https://algorand-client.herokuapp.com
 
 ## Overview
 
-- Client
-  - React
-  - TypeScript
-- API
-  - Nest.Js
-  - TypeORM
-- Database
-  - MySQL
+This is a monorepo of a fullstack react app that demonstrates some of the functionality of the [Algorand JavaScrip SDK](https://github.com/algorand/js-algorand-sdk) and the [Purestake Algorand SDK](https://developer.purestake.io/code-samples)
 
 ---
 
 ## Features
 
-- User accounts
-- Material Ui design/components
+- React/TypeScript frontend
+- Express server backend
+- Single db.json file as db
 
+## Installation
 
-## Required
-
-1. Git
-   - https://git-scm.com/downloads
-2. MySQL
-   - https://www.mysql.com/downloads/
-3. Node.Js
-   - https://nodejs.org/en/download/
-4. npm
-   - `npm i -g @nestjs/cli`
-   - `npm i -g typeorm`
-   - `npm install -g ts-node`
-
----
-
-## Recommended
-
-1. MySQL Workbench
-2. VSCode
+1. Clone repo
+   - `git clone https://github.com/kmgrassi/fullstack-algorand-sdk-example.git`
+2. Npm install
+   - `cd client`
+   - `npm install`
+   - `cd server`
+   - `npm install`
+3. Get Purestake api key
+   - https://developer.purestake.io/signup
+   - Copy api key into `.env` file in `server` directory:
+   - `PURESTAKE_KEY="YOUR-KEY"`
+4. Run
+   - In client directory `npm run start`
+   - In server directory `npm run start:dev`
 
 ---
 
-## Setup
+## How it works
 
-- API
-  1. Follow instructions in `api/README.md`
-- Client
-  1. Follow instructions in `client/README.md`
+### Overview
+
+### Create new address
+
+### Create asset
+
+### Transfer asset
+
+---
+
+## References
+
+- https://github.com/algorand/js-algorand-sdk
+- https://developer.purestake.io/code-samples
+- https://sophiali.dev/how-to-deploy-monorepo-to-heroku
 
 ---

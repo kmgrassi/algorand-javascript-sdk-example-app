@@ -1,13 +1,8 @@
-import { Grid, Link, Typography } from '@material-ui/core';
+import { CircularProgress, Grid, Link, Typography } from '@material-ui/core';
 import React, { useEffect, useState } from 'react';
-import {
-  StyledDataView,
-  TextButton,
-} from '../Shared/Components/StyledComponents';
-
+import { StyledDataView } from '../Shared/Components/StyledComponents';
 import { CreatedAssetTable, OwnedAssetTable } from './AssesTable';
 import { useAssetContext } from './AssetContext';
-import FileCopyIcon from '@material-ui/icons/FileCopy';
 
 export interface AlgoAccountInfo {
   assets: IOwnedAsset[];
@@ -38,8 +33,10 @@ export function AccountListItem({ account, index }) {
 
   const [accountBalance, setAccountBalance] = useState(0);
   const [info, setInfo] = useState();
+  const [loading, setLoading] = useState(true);
 
   const getInfo = async () => {
+    setLoading(false);
     const addressInfo = await getAddressInfo(account);
     if (addressInfo) {
       setInfo(addressInfo.account);
@@ -62,6 +59,10 @@ export function AccountListItem({ account, index }) {
       setAddressToUpdate('');
     }
   }, [addressToUpdate]);
+
+  if (loading) {
+    return <CircularProgress />;
+  }
 
   return (
     <Grid container>

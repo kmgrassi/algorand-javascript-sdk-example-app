@@ -18,10 +18,10 @@ export function StyledDataView({ label, text }) {
   const classes = styles();
   return (
     <Grid container spacing={1}>
-      <Grid item xs={12} sm={2}>
+      <Grid item xs={12} sm={4}>
         <Typography className={classes.infoLabel}>{label}</Typography>
       </Grid>
-      <Grid item xs={12} sm={10}>
+      <Grid item xs={12} sm={8}>
         <Typography className={classes.infoValue}>{text}</Typography>
       </Grid>
     </Grid>

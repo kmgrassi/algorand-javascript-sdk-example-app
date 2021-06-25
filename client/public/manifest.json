@@ -1,6 +1,6 @@
 {
-  "short_name": "Foundation",
-  "name": "Foundation | Renting built on a strong foundation",
+  "short_name": "Algorand SDK example",
+  "name": "Algorand JavaScript SDK example",
   "icons": [
     {
       "src": "favicon.ico",
