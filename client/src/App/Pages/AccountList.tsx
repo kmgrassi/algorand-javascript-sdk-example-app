@@ -3,6 +3,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Link,
 } from '@material-ui/core';
 import React from 'react';
 import { AccountListItem } from './AccountListItem';
@@ -14,6 +15,28 @@ export function AccountList({ accounts }) {
 
   return (
     <div>
+      <Accordion defaultExpanded={true}>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls='panel1a-content'
+          id='panel1a-header'
+        >
+          <Typography variant='overline' id={'address'}>
+            Overview
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography>
+            <Link
+              href='https://github.com/kmgrassi/fullstack-algorand-sdk-example'
+              target='_blank'
+            >
+              Link
+            </Link>{' '}
+            to github repo{' '}
+          </Typography>
+        </AccordionDetails>
+      </Accordion>
       {accounts &&
         accounts.map((account, index) => {
           return (
