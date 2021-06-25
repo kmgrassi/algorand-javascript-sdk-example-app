@@ -18,6 +18,7 @@
     "express": "^4.17.1",
     "express-rate-limit": "^4.0.4",
     "tsconfig-paths": "^3.9.0",
+    "ts-node": "^8.2.0",
     "typescript": "^3.8.0"
   },
   "devDependencies": {
