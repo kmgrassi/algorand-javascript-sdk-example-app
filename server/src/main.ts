@@ -4,17 +4,27 @@ const app = express();
 const fs = require('fs');
 const data = require('../src/db.json');
 const bodyParser = require('body-parser');
+const cors = require('cors');
+
+const corsOptions = {
+  origin: 'https://algorand-client.herokuapp.com/*',
+  optionsSuccessStatus: 200,
+};
 
 const assetService = new AssetService();
 app.use(bodyParser.json());
 const prefix = '/api';
 const port = process.env.PORT || 3000;
 
-app.get(prefix, (req, res) => {
-  res.send(data);
+app.get(prefix, cors(corsOptions), (req, res) => {
+  // Only send the address to frontend
+  const addresses = data.map((account) => {
+    return { address: account.address };
+  });
+  res.send(addresses);
 });
 
-app.get(prefix + '/asset/account/:id', async (req, res) => {
+app.get(prefix + '/asset/account/:id', cors(corsOptions), async (req, res) => {
   const address = req.params.id;
   let asset = '';
 
@@ -26,7 +36,7 @@ app.get(prefix + '/asset/account/:id', async (req, res) => {
 });
 
 // Create a new alogrand account
-app.post(prefix + '/asset/account', async (req, res) => {
+app.post(prefix + '/asset/account', cors(corsOptions), async (req, res) => {
   const account = await assetService.generateAlgorandAccount();
 
   if (account) {
@@ -41,7 +51,7 @@ app.post(prefix + '/asset/account', async (req, res) => {
 });
 
 // Transfer an algorand asset
-app.post(prefix + '/asset/transfer', async (req, res) => {
+app.post(prefix + '/asset/transfer', cors(corsOptions), async (req, res) => {
   let asset;
   const { body } = req;
 
@@ -67,7 +77,7 @@ app.post(prefix + '/asset/transfer', async (req, res) => {
 });
 
 // Create an algorand asset
-app.post(prefix + '/asset', async (req, res) => {
+app.post(prefix + '/asset', cors(corsOptions), async (req, res) => {
   let asset;
   const { body } = req;
 
