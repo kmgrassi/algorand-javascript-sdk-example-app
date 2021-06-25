@@ -1,7 +1,12 @@
 import * as request from 'superagent';
 
+const basePath =
+  process.env.NODE_ENV === 'development'
+    ? ''
+    : 'https://algorand-server.herokuapp.com';
+
 const sendRequest = async (path, method, data?) => {
-  return await request[method](`/api/${path}`)
+  return await request[method](`${basePath}/api${path}`)
 
     .send(data ? data : null)
     .then((res) => {

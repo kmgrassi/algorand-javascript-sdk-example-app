@@ -23,24 +23,15 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "start:dev": "npm-run-all -p start start-api",
-    "start:debug": "npm-run-all -p start start-api-debug",
-    "start-api": "cd ../api && npm run start:dev",
-    "start-api-debug": "cd ../api && npm run start:debug",
     "format": "prettier --write \"src/**/*.ts*\"",
-    "cypress": "./node_modules/.bin/cypress open",
     "test": "react-scripts test --env=jest-environment-jsdom-sixteen",
-    "eject": "react-scripts eject",
-    "docker-build": "docker build . -t client",
-    "docker-run": "docker run -p 3001:3001 -d --name client-container client",
-    "docker-stop-rm": "docker stop client-container && docker rm client-container"
+    "eject": "react-scripts eject"
   },
   "devDependencies": {
     "@types/reach__router": "^1.3.5",
     "@types/react": "^16.9.49",
     "@types/react-dom": "^16.9.8",
     "@types/superagent": "^4.1.10",
-    "cypress": "^5.4.0",
     "jest-environment-jsdom-sixteen": "^1.0.3",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.1.1",

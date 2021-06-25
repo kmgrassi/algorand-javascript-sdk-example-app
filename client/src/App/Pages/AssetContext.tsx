@@ -37,7 +37,7 @@ export const AssetContextWrapper = ({ children }) => {
 
   const getAddressInfo = async (account) => {
     const addressInfo: any = await getEntityById(
-      'asset/account',
+      '/asset/account',
       account.address,
     );
     if (addressInfo) {
@@ -49,13 +49,13 @@ export const AssetContextWrapper = ({ children }) => {
   };
 
   const createAlgoAccount = async () => {
-    await addEntity('asset/account', {}, 'Algorand address created', refresh);
+    await addEntity('/asset/account', {}, 'Algorand address created', refresh);
   };
 
   const handleCreateAsset = async (values) => {
     toggleCreateAsset();
     setSelectedAddress(values.address);
-    const res = await addEntity('asset', values, 'Asset created', refresh);
+    const res = await addEntity('/asset', values, 'Asset created', refresh);
     if (res) {
       updateAccountInfo(values.address);
     }
@@ -64,7 +64,7 @@ export const AssetContextWrapper = ({ children }) => {
   const handleTransferAssets = async (values) => {
     toggleTransferAsset();
     const res = await addEntity(
-      'asset/transfer',
+      '/asset/transfer',
       values,
       'Asset transfer complete',
       refresh,
