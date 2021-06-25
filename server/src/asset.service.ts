@@ -6,15 +6,9 @@ const algosdk = require('algosdk');
 
 const env = config.get('ENV');
 
-const baseServer =
-  env === 'dev'
-    ? 'https://testnet-algorand.api.purestake.io/ps2'
-    : 'https://mainnet-algorand.api.purestake.io/ps2';
+const baseServer = 'https://testnet-algorand.api.purestake.io/ps2';
 
-const indexerServer =
-  env === 'dev'
-    ? 'https://testnet-algorand.api.purestake.io/idx2'
-    : 'https://mainnet-algorand.api.purestake.io/idx2';
+const indexerServer = 'https://testnet-algorand.api.purestake.io/idx2';
 
 const port = '';
 const token = {
@@ -26,15 +20,6 @@ let indexerClient = new algosdk.Indexer(token, indexerServer, port);
 
 // The Algod v2 API is used to interact with the blockchain, querying current state, obtaining transaction parameteres and posting transactions.
 let algoClient = new algosdk.Algodv2(token, baseServer, port);
-
-const senderMnemonic =
-  env === 'dev'
-    ? 'trick claw smooth dry dial patch turtle off tiger sunny people produce feed ostrich goat typical police pigeon prize frequent category escape visual about column'
-    : 'Mainnet mnemonic';
-const senderAccount =
-  env === 'dev'
-    ? 'DX2ZYKPQKF6CZBIFILW6SWYGPDJXQS5USW4BJIY4TPL2T4CUJD6PQLC2GI'
-    : 'Mainnet account address';
 
 export class AssetService {
   constructor() {}
@@ -92,11 +77,11 @@ export class AssetService {
   }
 
   // Each account need a userId as reference. The mnemonic should never be shared outside the api.
-  public async createAlgoAccount(userId: number) {
+  public async createAlgoAccount(adminAccount: AlgoAccount) {
     const { address, mnemonic } = await this.generateAlgorandAccount();
 
     //Send 1 algo to the account so that account can accept transactions
-    await this.sendAlgos(senderMnemonic, address, 1000000).catch((err) =>
+    await this.sendAlgos(adminAccount.mnemonic, address, 1000000).catch((err) =>
       console.log(err),
     );
   }
@@ -332,7 +317,8 @@ export class AssetService {
   }
 
   public async initiateAssetClawback(
-    targetAddr: string,
+    holderAccount: AlgoAccount,
+    targetAccount: AlgoAccount,
     assetId: number,
     amount: number,
   ) {
@@ -342,9 +328,9 @@ export class AssetService {
 
     // create the asset revoke transaction
     const transactionOptions = {
-      from: senderAccount,
-      to: senderAccount,
-      revocationTarget: targetAddr,
+      from: holderAccount.address,
+      to: holderAccount.address,
+      revocationTarget: targetAccount.address,
       amount: Number(amount),
       assetIndex: Number(assetId),
       suggestedParams: params,
@@ -354,20 +340,20 @@ export class AssetService {
       transactionOptions,
     );
 
-    await this.signTxnAndSend(txn);
+    await this.signTxnAndSend(txn, holderAccount);
 
-    await this.printAssetHolding(algoClient, targetAddr, assetId);
+    await this.printAssetHolding(algoClient, targetAccount.address, assetId);
   }
 
   // All assets need to be in creator address before they can be destroyed
-  public async assetDestroy(assetId: number) {
+  public async assetDestroy(assetId: number, holderAccount: AlgoAccount) {
     await this.lookupAssetsById(assetId).catch((err) => Promise.reject(err));
 
     let params = await algoClient.getTransactionParams().do();
 
     // create the asset revoke transaction
     const transactionOptions = {
-      from: senderAccount,
+      from: holderAccount.address,
       assetIndex: Number(assetId),
       suggestedParams: params,
     };
@@ -375,11 +361,11 @@ export class AssetService {
       transactionOptions,
     );
 
-    await this.signTxnAndSend(txn);
+    await this.signTxnAndSend(txn, holderAccount);
   }
 
-  public async signTxnAndSend(txn) {
-    const adminSk = algosdk.mnemonicToSecretKey(senderMnemonic).sk;
+  public async signTxnAndSend(txn, account: AlgoAccount) {
+    const adminSk = algosdk.mnemonicToSecretKey(account.mnemonic).sk;
     // sign the transaction
     const signedTxn = txn.signTxn(adminSk);
 
