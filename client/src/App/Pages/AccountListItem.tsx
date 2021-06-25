@@ -94,7 +94,7 @@ export function AccountListItem({ account, index }) {
       {accountBalance === 0 && (
         <div style={{ marginTop: 10 }}>
           <Typography>
-            Copy address and past into{' '}
+            Copy address and paste into{' '}
             <Link
               align='center'
               href='https://testnet.algoexplorer.io/dispenser'
