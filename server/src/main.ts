@@ -10,6 +10,7 @@ const corsOptions = {
   origin: 'https://algorand-client.herokuapp.com',
   optionsSuccessStatus: 200,
 };
+app.options('*', cors());
 
 const assetService = new AssetService();
 app.use(bodyParser.json());
