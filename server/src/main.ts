@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const corsOptions = {
-  origin: 'https://algorand-client.herokuapp.com/*',
+  origin: 'https://algorand-client.herokuapp.com',
   optionsSuccessStatus: 200,
 };
 
