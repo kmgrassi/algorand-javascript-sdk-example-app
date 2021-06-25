@@ -4,8 +4,6 @@ import { AlgoAccount, AssetTransferDto } from './algoAsset.entity';
 const config = new ConfigService();
 const algosdk = require('algosdk');
 
-const env = config.get('ENV');
-
 const baseServer = 'https://testnet-algorand.api.purestake.io/ps2';
 
 const indexerServer = 'https://testnet-algorand.api.purestake.io/idx2';

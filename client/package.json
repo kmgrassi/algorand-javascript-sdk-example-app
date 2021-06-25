@@ -26,7 +26,7 @@
     "format": "prettier --write \"src/**/*.ts*\"",
     "test": "react-scripts test --env=jest-environment-jsdom-sixteen",
     "eject": "react-scripts eject",
-    "deploy": "git subtree push --prefix client heroku-client master"
+    "deploy": "cd .. && git subtree push --prefix client heroku-client master"
   },
   "devDependencies": {
     "@types/reach__router": "^1.3.5",
