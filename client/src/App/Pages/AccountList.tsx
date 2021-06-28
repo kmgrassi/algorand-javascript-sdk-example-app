@@ -4,6 +4,7 @@ import {
   AccordionDetails,
   AccordionSummary,
   Link,
+  Box,
 } from '@material-ui/core';
 import React from 'react';
 import { AccountListItem } from './AccountListItem';
@@ -26,15 +27,28 @@ export function AccountList({ accounts }) {
           </Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <Typography>
-            <Link
-              href='https://github.com/kmgrassi/fullstack-algorand-sdk-example'
-              target='_blank'
-            >
-              Link
-            </Link>{' '}
-            to github repo{' '}
-          </Typography>
+          <Box display='block'>
+            <Typography paragraph>
+              This app uses the{' '}
+              <Link href='https://testnet.algoexplorer.io/'>
+                Algorand testnet
+              </Link>{' '}
+              for all addresses and transactions.
+            </Typography>
+            <Typography>
+              Link to{' '}
+              <Link
+                href='https://github.com/kmgrassi/fullstack-algorand-sdk-example'
+                target='_blank'
+              >
+                github repo
+              </Link>{' '}
+              and{' '}
+              <Link href='https://www.walkerjones.co/posts/algorand-JavaScript-sdk-example-app'>
+                blog post.
+              </Link>
+            </Typography>
+          </Box>
         </AccordionDetails>
       </Accordion>
       {accounts &&
