@@ -9,3 +9,9 @@ export interface AssetTransferDto {
   assetId: number;
   amount: number;
 }
+
+export interface CreateAlgoAssetDto {
+  totalTokens: number;
+  tokenName: string;
+  address: string;
+}

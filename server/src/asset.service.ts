@@ -1,5 +1,9 @@
 import { ConfigService } from './config.service';
-import { AlgoAccount, AssetTransferDto } from './algoAsset.entity';
+import {
+  AlgoAccount,
+  AssetTransferDto,
+  CreateAlgoAssetDto,
+} from './algoAsset.entity';
 
 const config = new ConfigService();
 const algosdk = require('algosdk');
@@ -23,22 +27,22 @@ export class AssetService {
   constructor() {}
 
   public async lookupAddressById(address: string): Promise<any> {
-    let asset = await indexerClient.lookupAccountByID(address).do();
+    let asset = await indexerClient
+      .lookupAccountByID(address)
+      .do()
+      .catch((err) => Promise.reject(err));
     return asset;
   }
 
   public async getAlgoAssets(assetName: string) {
-    (async () => {
-      let asset = await indexerClient
-        .searchForAssets()
-        .limit(10)
-        .name(assetName)
-        .do();
-      console.log(asset);
-      return asset;
-    })().catch((e) => {
-      console.log(e);
-    });
+    let asset = await indexerClient
+      .searchForAssets()
+      .limit(10)
+      .name(assetName)
+      .do()
+      .catch((err) => Promise.reject(err));
+
+    return asset;
   }
 
   public async lookupAssetsById(assetId: number) {
@@ -54,13 +58,12 @@ export class AssetService {
   }
 
   public async lookupAssetsBalances(assetId: number) {
-    return (async () => {
-      let balances = await indexerClient.lookupAssetBalances(assetId).do();
+    let balances = await indexerClient
+      .lookupAssetBalances(assetId)
+      .do()
+      .catch((err) => Promise.reject(err));
 
-      return balances;
-    })().catch((e) => {
-      console.log(e);
-    });
+    return balances;
   }
 
   public async generateAlgorandAccount(): Promise<any> {
@@ -79,26 +82,20 @@ export class AssetService {
     const { address, mnemonic } = await this.generateAlgorandAccount();
 
     //Send 1 algo to the account so that account can accept transactions
-    await this.sendAlgos(adminAccount.mnemonic, address, 1000000).catch((err) =>
+    await this.sendAlgos(adminAccount, address, 1000000).catch((err) =>
       console.log(err),
     );
   }
 
   public async createNewAlgoAsset(
-    data: {
-      totalTokens: number;
-      tokenName: string;
-      address: string;
-    },
-    mnemonic,
+    data: CreateAlgoAssetDto,
+    account: AlgoAccount,
   ) {
     if (!data || !data.totalTokens || !data.tokenName || !data.address) {
       return Promise.reject('Not enough data provided to create the asset');
     }
 
     const { totalTokens, tokenName, address } = data;
-
-    const sender = algosdk.mnemonicToSecretKey(mnemonic);
 
     let params = await algoClient.getTransactionParams().do();
 
@@ -142,66 +139,8 @@ export class AssetService {
       suggestedParams,
     });
 
-    // sign the transaction
-    const signedTxn = txn.signTxn(sender.sk);
-
-    // // print transaction data
-    // const decoded = algosdk.decodeSignedTransaction(signedTxn);
-
-    let sendTx = await algoClient.sendRawTransaction(signedTxn).do();
-
-    await this.waitForConfirmation(algoClient, sendTx.txId);
-
-    let ptx = await algoClient.pendingTransactionInformation(sendTx.txId).do();
-
-    const assetId = ptx['asset-index'];
-
-    return { assetId };
+    await this.signTxnAndSend(txn, account);
   }
-
-  // Function used to wait for a tx confirmation
-  public waitForConfirmation = async function (algodclient, txId) {
-    let response = await algodclient.status().do();
-    let lastround = response['last-round'];
-    while (true) {
-      const pendingInfo = await algodclient
-        .pendingTransactionInformation(txId)
-        .do();
-      if (
-        pendingInfo['confirmed-round'] !== null &&
-        pendingInfo['confirmed-round'] > 0
-      ) {
-        //Got the completed Transaction
-        console.log(
-          'Transaction ' +
-            txId +
-            ' confirmed in round ' +
-            pendingInfo['confirmed-round'],
-        );
-        break;
-      }
-      lastround++;
-      await algodclient.statusAfterBlock(lastround).do();
-    }
-  };
-
-  // Function used to print asset holding for account and assetid
-  public printAssetHolding = async function (algodclient, account, assetid) {
-    // note: if you have an indexer instance available it is easier to just use this
-    //     let accountInfo = await indexerClient.searchAccounts()
-    //    .assetID(assetIndex).do();
-    // and in the loop below use this to extract the asset for a particular account
-    // accountInfo['accounts'][idx][account]);
-    let accountInfo = await algodclient.accountInformation(account).do();
-    for (let idx = 0; idx < accountInfo['assets'].length; idx++) {
-      let scrutinizedAsset = accountInfo['assets'][idx];
-      if (scrutinizedAsset['asset-id'] == assetid) {
-        let myassetholding = JSON.stringify(scrutinizedAsset, undefined, 2);
-        console.log('assetholdinginfo = ' + myassetholding);
-        break;
-      }
-    }
-  };
 
   // Used by the controller to transfer an asset
   public async createAssetTransferWithAssetInfo({
@@ -229,9 +168,6 @@ export class AssetService {
     recipientAccount: AlgoAccount,
     assetId: number,
   ) {
-    const senderSecretKey = algosdk.mnemonicToSecretKey(senderAccount.mnemonic)
-      .sk;
-
     const params = await algoClient.getTransactionParams().do();
 
     // We set revocationTarget to undefined as
@@ -255,21 +191,8 @@ export class AssetService {
       params,
     );
 
-    // Must be signed by the account wishing to opt in to the asset
-    const rawSignedTxn = opttxn.signTxn(senderSecretKey);
+    await this.signTxnAndSend(opttxn, senderAccount);
 
-    let opttx = await algoClient
-      .sendRawTransaction(rawSignedTxn)
-      .do()
-      .catch((err) => console.log(err));
-
-    console.log('Transaction : ' + opttx.txId);
-
-    // wait for transaction to be confirmed
-    await this.waitForConfirmation(algoClient, opttx.txId);
-
-    //You should now see the new asset listed in the account information
-    console.log('Account = ' + recipientAccount.address);
     await this.printAssetHolding(algoClient, recipientAccount.address, assetId);
   }
 
@@ -284,34 +207,25 @@ export class AssetService {
 
   // Send algorand tokens from address to address
   public async sendAlgos(
-    senderMnemonic: string,
+    senderAccount: AlgoAccount,
     recipientAddress: string,
     amount: number,
   ) {
-    (async () => {
-      let params = await algoClient.getTransactionParams().do();
+    let params = await algoClient.getTransactionParams().do();
 
-      var senderAccount = algosdk.mnemonicToSecretKey(senderMnemonic);
+    let txn = {
+      from: senderAccount.address,
+      to: recipientAddress,
+      fee: 1,
+      amount,
+      firstRound: params.firstRound,
+      lastRound: params.lastRound,
+      genesisID: params.genesisID,
+      genesisHash: params.genesisHash,
+      note: new Uint8Array(0),
+    };
 
-      let txn = {
-        from: senderAccount.addr,
-        to: recipientAddress,
-        fee: 1,
-        amount,
-        firstRound: params.firstRound,
-        lastRound: params.lastRound,
-        genesisID: params.genesisID,
-        genesisHash: params.genesisHash,
-        note: new Uint8Array(0),
-      };
-
-      let signedTxn = algosdk.signTransaction(txn, senderAccount.sk);
-      let sendTx = await algoClient.sendRawTransaction(signedTxn.blob).do();
-
-      console.log('Transaction : ' + sendTx.txId);
-    })().catch((e) => {
-      console.log(e);
-    });
+    await this.signTxnAndSend(txn, senderAccount);
   }
 
   public async initiateAssetClawback(
@@ -367,10 +281,6 @@ export class AssetService {
     // sign the transaction
     const signedTxn = txn.signTxn(adminSk);
 
-    // print transaction data
-    //  const decoded = algosdk.decodeSignedTransaction(signedTxn);
-    //  console.log(decoded);
-
     let opttx = await algoClient
       .sendRawTransaction(signedTxn)
       .do()
@@ -381,4 +291,43 @@ export class AssetService {
     // wait for transaction to be confirmed
     await this.waitForConfirmation(algoClient, opttx.txId);
   }
+
+  // Function used to wait for a tx confirmation
+  public waitForConfirmation = async function (algodclient, txId) {
+    let response = await algodclient.status().do();
+    let lastround = response['last-round'];
+    while (true) {
+      const pendingInfo = await algodclient
+        .pendingTransactionInformation(txId)
+        .do();
+      if (
+        pendingInfo['confirmed-round'] !== null &&
+        pendingInfo['confirmed-round'] > 0
+      ) {
+        //Got the completed Transaction
+        console.log(
+          'Transaction ' +
+            txId +
+            ' confirmed in round ' +
+            pendingInfo['confirmed-round'],
+        );
+        break;
+      }
+      lastround++;
+      await algodclient.statusAfterBlock(lastround).do();
+    }
+  };
+
+  // Function used to print asset holding for account and assetid
+  public printAssetHolding = async function (algodclient, account, assetid) {
+    let accountInfo = await algodclient.accountInformation(account).do();
+    for (let idx = 0; idx < accountInfo['assets'].length; idx++) {
+      let scrutinizedAsset = accountInfo['assets'][idx];
+      if (scrutinizedAsset['asset-id'] == assetid) {
+        let myassetholding = JSON.stringify(scrutinizedAsset, undefined, 2);
+        console.log('assetholdinginfo = ' + myassetholding);
+        break;
+      }
+    }
+  };
 }

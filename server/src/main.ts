@@ -87,8 +87,7 @@ app.post(prefix + '/asset', cors(corsOptions), async (req, res) => {
   });
 
   if (account) {
-    const { mnemonic } = account;
-    asset = await assetService.createNewAlgoAsset(body, mnemonic);
+    asset = await assetService.createNewAlgoAsset(body, account);
   }
 
   res.send(asset);
