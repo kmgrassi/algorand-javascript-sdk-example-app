@@ -1,7 +1,7 @@
 import { CircularProgress, Grid, Link, Typography } from '@material-ui/core';
 import React, { useEffect, useState } from 'react';
 import { StyledDataView } from '../Shared/Components/StyledComponents';
-import { CreatedAssetTable, OwnedAssetTable } from './AssesTable';
+import { CreatedAssetTable, OwnedAssetTable } from './AssetTable';
 import { useAssetContext } from './AssetContext';
 
 export interface AlgoAccountInfo {
@@ -65,7 +65,7 @@ export function AccountListItem({ account, index }) {
   }
 
   return (
-    <Grid container>
+    <Grid container spacing={3}>
       <Grid xs={12} sm={4}>
         <StyledDataView
           label='Account balance'
@@ -107,8 +107,13 @@ export function AccountListItem({ account, index }) {
         </div>
       )}
 
-      {info && <CreatedAssetTable info={info} />}
-      {info && <OwnedAssetTable info={info} />}
+      <Grid sm={12} md={6}>
+        {info && <CreatedAssetTable info={info} />}
+      </Grid>
+
+      <Grid sm={12} md={6}>
+        {info && <OwnedAssetTable info={info} />}
+      </Grid>
     </Grid>
   );
 }
